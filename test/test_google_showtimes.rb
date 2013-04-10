@@ -10,7 +10,7 @@ require 'time'
 class TestGoogleShowtimes < Test::Unit::TestCase
   def test_for_location
     location, results = GoogleShowtimes.for('02139')
-    assert_equal 'Cambridge, MA 02139', location, 'Location'
+    assert_equal 'Cambridge, MA', location, 'Location'
     
     assert_operator results.length, :>, 0, 'Showtime count'
     
