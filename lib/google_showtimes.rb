@@ -240,7 +240,7 @@ module GoogleShowtimes
   
   # Parses a showtime returned by Google showtimes.
   def self.parse_time(timestr)
-    time_parts = /(\d+)\:(\d\d)\W*(\w*)$/.match timestr
+    time_parts = /(\d+)\:(\d\d)\W*(\w*)/.match timestr
     time = Time.now
     if time_parts
       is_am = time_parts[3].downcase == 'am'
@@ -253,6 +253,8 @@ module GoogleShowtimes
         hour -= 12 if hour == 12
       end
       time = Time.gm(time.year, time.month, time.day, hour, minute, 0)
+    else
+      time = Time.at(0).utc
     end
     return time
   end  
