@@ -149,9 +149,9 @@ module GoogleShowtimes
   #     a, p = address_phone('234 West 42nd St., New York - (212) 398-3939')
   def self.address_phone(text)
     # The biggest suffix that consists of non-word characters.
-    # HACK: One x is allowed, for extension: (800) 326-3264 x771
+    # HACK: One ext. is allowed, for extension: (800) 326-3264 ext. 771
     ph_number = text.scan(
-        /[[:digit:][:punct:][:space:]]+(?:x[[:digit:][:punct:][:space:]]+)?$/u).
+        /[[:digit:][:punct:][:space:]]+(?:ext[[:digit:][:punct:][:space:]]+)?$/u).
         sort_by(&:length).last
     return text, nil unless ph_number
     
