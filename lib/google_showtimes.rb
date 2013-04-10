@@ -15,11 +15,14 @@ require 'nokogiri'
 # The #for method is the only method intended to be used by client code. See its
 # documentation to get started.
 module GoogleShowtimes
+  @@request_time = nil
+
   # Searches Google (google.com/movies) for movie showtimes.
   #
   # Args:
-  #   movie:: the name of the movies
-  #           if nil, will retrieve all the showtimes at the given location
+  #   params:: optional parameters
+  #            :movie - the name of a movie to search, if nil, retrieves all movies
+  #            :date - the zero based date index offset from today, if nil, defaults to 0
   #   location:: a string containing the location to search for 
   #              Google is awesome at geocoding, so throw in zipcodes,
   #              addresses, cities, or hoods
@@ -32,13 +35,13 @@ module GoogleShowtimes
   #       :showtimes => [ { :time => '11:30am' },
   #                       { :time => '1:00', :href => 'site selling tickets' } ]
   #     }
-  def self.for(location, movie = nil)
-    query = if movie
-      "/movies?q=#{URI.encode(movie)}&near=#{URI.encode(location)}"
-    else
-      "/movies?near=#{URI.encode(location)}"
-    end
-  
+  def self.for(location, params = {})
+    query = "/movies?near=#{URI.encode(location)}"
+    query += "&q=#{URI.encode(params[:movie])}" unless params[:movie].nil?
+    query += "&date=#{URI.encode(params[:date].to_s)}" unless params[:date].nil?
+
+    @@request_time = Time.now + ((params[:date] || 0) * 86400)
+
     results = []
     google_location = nil
     while query
@@ -241,7 +244,7 @@ module GoogleShowtimes
   # Parses a showtime returned by Google showtimes.
   def self.parse_time(timestr)
     time_parts = /(\d+)\:(\d\d)\W*(\w*)/.match timestr
-    time = Time.now
+    time = @@request_time
     if time_parts
       is_am = time_parts[3].downcase == 'am'
       is_pm = time_parts[3].downcase == 'pm'

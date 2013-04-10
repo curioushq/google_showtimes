@@ -18,12 +18,25 @@ class TestGoogleShowtimes < Test::Unit::TestCase
            'Results include at least one AMC theater ' + results.inspect    
   end
   
+  def test_for_date
+    location, results = GoogleShowtimes.for('02139', { :date => 1 })
+    assert_operator results.length, :>, 0, 'Showtime count'
+    
+    now = Time.now
+    tomorrow = Time.new(now.year, now.month, now.day, 0, 0, 0, 0) + 86400
+    day_after_tomorrow = tomorrow + 86400
+
+    assert results.all? { |r| r[:showtimes].all? { |s| s[:time] >= tomorrow and s[:time] <= day_after_tomorrow } },
+           "All results are for the specified date (#{tomorrow}) " +
+           results.inspect    
+  end
+
   def test_for_movie
     # Find a movie that's running.
     location, results = GoogleShowtimes.for('02139')
     movie_name = results.first[:film][:name]
     
-    location, results = GoogleShowtimes.for('02139', movie_name)
+    location, results = GoogleShowtimes.for('02139', { :movie => movie_name })
     assert_operator results.length, :>, 0, 'Showtime count'
     
     assert results.all? { |r| r[:film][:name].index movie_name },
