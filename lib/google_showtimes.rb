@@ -200,25 +200,33 @@ module GoogleShowtimes
   # parsing failed.
   def self.parse_showing_times(nokogiri)
     times = []
-    time_set = Set.new
+    plain_times = []
+    time_period = nil
+    found_time = nil
+    time_with_period = nil
     
     # Parse times with ticket buying links.
     nokogiri.css('a').each do |a|
       next unless /\d\:\d\d/ =~ a.text
-      time_set << a.text
-      times << { :time => a.text, :href => cleanup_redirects(a['href']) }
+      time_text = a.text.sub(/^\D*(\d+)\:(\d\d)\W*(\w*).*$/, '\1:\2\3')
+      times << { :time => time_text, :href => cleanup_redirects(a['href']) }
     end
-    
+
     # Parse plaintext times.
-    plain_times = []
-    nokogiri.text.split.each do |time_text|
-      time_text.gsub!(/[^\d\:amp]/, '')
+    nokogiri.text.split.reverse.each do |time_text|
+      time_text = time_text.sub(/^\D*(\d+)\:(\d\d)\W*(\w*).*$/, '\1:\2\3')
       next unless /\d\:\d\d/ =~ time_text
-      next if time_set.include? time_text
-      time_set << time_text
-      plain_times << { :time => time_text }
+      time_period = $1 if time_text =~ /([pa]m)$/
+      time_with_period = time_text.sub(/\D*$/, time_period)
+      found_time = times.detect { |t| t[:time] == time_text }
+      if found_time
+        found_time[:time] = time_with_period
+        next
+      end
+      plain_times << { :time => time_with_period }
     end
-    times = plain_times + times  # Plaintext times always precede linked times.
+
+    times = plain_times.reverse + times  # Plaintext times always precede linked times.
     
     # Parse text-form time into Time objects.
     last_suffix = ''
